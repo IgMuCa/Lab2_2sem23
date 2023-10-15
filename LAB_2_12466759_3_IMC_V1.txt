@@ -1,0 +1,27 @@
+% Otros:
+addElemLista(Elemento, Lista, [Elemento| Lista]).
+
+
+%P2 / Constructor Options (Capa cosntructora):
+option(Code, Msg, CbCode, InFlCodeLink, Keyword, [Code, Msg, CBCode, InFlCodeLink, Keyword]).
+
+%P3 / Constructor - Flows (Capa cosntructora):
+flow(Id, Msg, Options, [Id, Msg, Options]).
+
+%P4 / Flow - Modificador (Capa Set):
+flowAddOption(FlowIn, NewOption, FlowOut):-
+    flow(Id, Msg, Options, FlowIn),
+    addElemLista(NewOption, Options, OptionsOut),    %Falta verificador de que no se repita la Option
+    flow(Id, Msg, OptionsOut, FlowOut).
+    
+%P5 / Constructor - Chatbots (Capa cosntructora):
+chatbot(CbId, Name, Msg, StartFlowId, Flows, [CBId, Name, Msg, StartFlowId, Flows]).
+
+%P6 / Chatbot - Modificador (Capa Set):
+chatbotAddFlow(ChatbotIn, NewFlow, ChatbotOut):-
+    chatbot(CbId, Name, Msg, StartFlowId, Flows, ChatbotIn),
+    addElemLista(Newflow, Flows, FlowsOut),    %Falta verificador de que no se repita la Option
+    chatbot(CbId, Name, Msg, StartFlowId, FlowsOut, ChatbotOut).
+
+%P7: Constructor - System (Capa cosntructora):
+system(Name, InCbCode, Chatbots, [Name, InCbCode, Chatbots]).
