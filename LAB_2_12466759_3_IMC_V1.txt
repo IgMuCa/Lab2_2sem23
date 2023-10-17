@@ -1,12 +1,36 @@
 % Otros:
+%Agrgar elemtos a lista:
 addElemLista(Elemento, Lista, [Elemento| Lista]).
+
+%Agregar elementos a una lista sin repetir:
+agregarSinDuplicado([], []).
+agregarSinDuplicado([C|Resto], LAcc ):- 
+ agregarSinDuplicado(Resto, LAcc),
+    member(C, LAcc). 
+agregarSinDuplicado([C|Resto], [C|LAcc]):-
+ agregarSinDuplicado(Resto, LAcc),
+    \+ member(C, LAcc).
+
+
+addElemIfUnicoId(Elemento, [], [Elemento]).
+
+addElemIfUnicoId([CE|HE], [[C1|_]|Resto], [[CE|HE]|LAcc]):-
+    addElemIfUnicoId([CE|HE], Resto, LAcc),
+    CE\= C1.
+
+addElemIfUnicoId([CE|HE], [[C1|_]|Resto], LAcc):-
+    addElemIfUnicoId([CE|HE], Resto, LAcc),
+    CE = C1.
+    
+
+
 
 
 %P2 / Constructor Options (Capa cosntructora):
 option(Code, Msg, CbCode, InFlCodeLink, Keyword, [Code, Msg, CBCode, InFlCodeLink, Keyword]).
 
 %P3 / Constructor - Flows (Capa cosntructora):
-flow(Id, Msg, Options, [Id, Msg, Options]).
+flow(Id, Msg, Options, [Id, Msg, agregarSinDuplicado(Options, LOps)]).
 
 %P4 / Flow - Modificador (Capa Set):
 flowAddOption(FlowIn, NewOption, FlowOut):-
@@ -15,7 +39,7 @@ flowAddOption(FlowIn, NewOption, FlowOut):-
     flow(Id, Msg, OptionsOut, FlowOut).
     
 %P5 / Constructor - Chatbots (Capa cosntructora):
-chatbot(CbId, Name, Msg, StartFlowId, Flows, [CBId, Name, Msg, StartFlowId, Flows]).
+chatbot(CbId, Name, Msg, StartFlowId, Flows, [CBId, Name, Msg, StartFlowId, agregarSinDuplicado(Flows, LFls)]).
 
 %P6 / Chatbot - Modificador (Capa Set):
 chatbotAddFlow(ChatbotIn, NewFlow, ChatbotOut):-
@@ -24,4 +48,7 @@ chatbotAddFlow(ChatbotIn, NewFlow, ChatbotOut):-
     chatbot(CbId, Name, Msg, StartFlowId, FlowsOut, ChatbotOut).
 
 %P7: Constructor - System (Capa cosntructora):
-system(Name, InCbCode, Chatbots, [Name, InCbCode, Chatbots]).
+system(Name, InCbCode, Chatbots, [Name, InCbCode, agregarSinDuplicado(Chatbots, LCbs)]).
+
+
+
