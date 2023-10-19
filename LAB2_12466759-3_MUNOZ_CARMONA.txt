@@ -1,0 +1,94 @@
+% OTROS:
+% Boolean para la igualdad de cualquier elemento con otro.
+esigual(X, X).
+
+%Agrgar elementos a lista:
+addElemLista(Elemento, Lista, [Elemento| Lista]).
+
+%Agregar elemento a lista, simepre que ya no esté en la lista:
+addUnicoElemLista(Elem, LIn, LIn):-
+    member(Elem, LIn).
+
+addUnicoElemLista(Elem, LIn, [Elem|LIn]):-
+    \+ member(Elem, LIn).
+
+%Agregar elementos de una lista a otra lista, asegurando que no hayan duplicados en la lista final:
+agregarSinDuplicado([], []).
+agregarSinDuplicado([C|Resto], LAcc ):- 
+ agregarSinDuplicado(Resto, LAcc),
+    member(C, LAcc). 
+agregarSinDuplicado([C|Resto], [C|LAcc]):-
+ agregarSinDuplicado(Resto, LAcc),
+    \+ member(C, LAcc).
+
+%Funcion que define si un elemento (option, flow) puede agregarse asegurando que su Id es unico:
+ifUnicoId(_, []).
+ifUnicoId([CE|_], [[C1|_]|Resto]):-
+    ifUnicoId([CE|_], Resto),
+    CE\= C1.
+
+%P2 / Constructor Options (Capa cosntructora):
+option(Code, Msg, CbCode, InFlCodeLink, Keyword, [Code, Msg, CbCode, InFlCodeLink, Keyword]).
+
+%P3 / Constructor - Flows (Capa cosntructora):
+flow(Id, Msg, Options, [Id, Msg, LOps]):-
+    agregarSinDuplicado(Options, LOps).
+    
+%P4 / Flow - Modificador (Capa Set):
+flowAddOption(FlowIn, NewOption, FlowOut):-
+    flow(Id, Msg, Options, FlowIn),
+    ifUnicoId(NewOption, Options),
+    addElemLista(NewOption, Options, OptionsOut),    %Falta verificador de que no se repita la Option
+    flow(Id, Msg, OptionsOut, FlowOut).
+    
+%P5 / Constructor - Chatbots (Capa cosntructora):
+chatbot(CbId, Name, Msg, StartFlowId, Flows, [CbId, Name, Msg, StartFlowId, LFls]):-
+     agregarSinDuplicado(Flows, LFls).
+
+%P6 / Chatbot - Modificador (Capa Set):
+chatbotAddFlow(ChatbotIn, NewFlow, ChatbotOut):-
+    chatbot(CbId, Name, Msg, StartFlowId, Flows, ChatbotIn),
+    ifUnicoId(NewFlow, Flows),
+    addElemLista(Newflow, Flows, FlowsOut),    %Falta verificador de que no se repita la Option
+    chatbot(CbId, Name, Msg, StartFlowId, FlowsOut, ChatbotOut).
+
+%P7: Constructor - System (Capa cosntructora): 
+%system incluye: Name, InCbCode, Users, Current_Users, CHist,  LCbs
+system(Name, InCbCode, Users, Current_Users, CHist,Chatbots, [Name, InCbCode, Users, Current_Users, CHist, LCbs]):-
+    agregarSinDuplicado(Chatbots, LCbs).
+
+%P8 / System - Modificador (Capa Set):
+systemAddFCb(SysIn, NewCb, SysOut):-
+    system(Name, InCbCode, Users, Current_Users, CHist, Chatbots, SysIn),
+    ifUnicoId(NewCb, Chatbots),
+    addElemLista(NewCb, Chatbots, ChatbotsOut),    %Falta verificador de que no se repita la Option
+    system(Name, InCbCode, Users, Current_Users, CHist, ChatbotsOut, SysOut).
+
+%P9 / Add users:
+systemAddUser(SysIn, User, SysOut):-
+    system(Name, InCbCode, Users, Current_Users, CHist, Chatbots, SysIn),
+    addUnicoElemLista(User, Users, UsersOut),
+    system(Name, InCbCode, UsersOut, Current_Users, CHist, Chatbots, SysOut).
+
+%P10 /login:
+   systemLogin(SysIn, User, SysOut):-
+     system(Name, InCbCode, Users, Current_Users, CHist, Chatbots, SysIn),
+     member(User, Users),
+     esigual(Current_Users,""),
+     Current_UsersOut is User,
+     system(Name, InCbCode, Users,  Current_UsersOut, CHist, Chatbots, SysOut).
+
+%P11 /logout:
+   systemLogin(SysIn, User, SysOut):-
+     system(Name, InCbCode, Users, Current_Users, CHist, Chatbots, SysIn),
+     \+ esigual(Current_Users,""),
+     Current_UsersOut is "",
+     system(Name, InCbCode, Users,  Current_UsersOut, CHist, Chatbots, SysOut).
+
+%P12 /Interaccion con un chatbot:
+%Cuenta las interacciones del usuario actual en un sistema.
+
+
+
+systemTalkRec
+
