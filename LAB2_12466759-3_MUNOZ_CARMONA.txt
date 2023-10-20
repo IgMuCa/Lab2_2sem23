@@ -124,8 +124,19 @@ numCbnumFlAsociadoaOp(LIn, LOut):-
     cdr(RevL, CDRevL),
     car(CDRevL,Cb1), 
     LOut = [Cb1, Fl1].
+
+makeInteration();.
+
+systemTalkRec(SysIn, User, SysOut):-
+    system(Name, InCbCode, Users, Current_Users, CHist, Chatbots, SysIn),
+    contarInteraciones(CHist, User, Num), 
+    Num = 0, 
     
-
-
+    
+systemTalkRec(SysIn, User, SysOut):-
+    system(Name, InCbCode, Users, Current_Users, CHist, Chatbots, SysIn),
+    contarInteraciones(CHist, User, Num), 
+    \+ Num = 0,   
+    
 
 
