@@ -1,6 +1,8 @@
 % OTROS:
 % Boolean para la igualdad de cualquier elemento con otro.
 esigual(X, X).
+
+%Programas para manipilar listas
 car([C|_], C).
 cdr([_|Resto],Resto).
 cadr(L, C):-
@@ -10,7 +12,12 @@ caddr(L, F):-
     cdr(L, L1),
     cdr(L1,L2),
     car(L2,F).
-    
+cadddr(L, G):-
+    cdr(L, L1),
+    cdr(L1,L2),
+    cdr(L3,L3),
+    car(L3,G). 
+
 % Reversar una lista.
 reverse([], []).
 reverse([C1|H1], L):-
@@ -27,102 +34,100 @@ addUnicoElemLista(Elem, LIn, [Elem|LIn]):-
     \+ member(Elem, LIn).
 
 % Agregar elementos de una lista a otra lista, asegurando que no hayan duplicados en la lista final:
-agregarSinDuplicado([], []).
-agregarSinDuplicado([C|Resto], LAcc ):- 
- agregarSinDuplicado(Resto, LAcc),
-    member(C, LAcc). 
-agregarSinDuplicado([C|Resto], [C|LAcc]):-
- agregarSinDuplicado(Resto, LAcc),
-    \+ member(C, LAcc).
-
-% Funcion que define si un elemento (option, flow) puede agregarse asegurando que su Id es unico:
-ifUnicoId(_, []).
-ifUnicoId([CE|_], [[C1|_]|Resto]):-
-    ifUnicoId([CE|_], Resto),
-    CE\= C1.
+agregarSinDuplicado([], ListaInAcc, ListaInAcc).
+agregarSinDuplicado([C|Resto], ListaInAcc, ListaOut):- 
+    member(C, ListaInAcc),
+    agregarSinDuplicado(Resto, ListaInAcc, ListaOut).
+   
+agregarSinDuplicado([C|Resto], ListaInAcc, ListaOut):-
+     \+ member(C, ListaInAcc),
+    agregarSinDuplicado(Resto, [C|ListaInAcc], ListaOut).
+   
 
 %--------------------------------------------------------------------------------------------------
 % P2 / Constructor Options (Capa cosntructora):
 option(Code, Msg, CbCode, InFlCodeLink, Keyword, [Code, Msg, CbCode, InFlCodeLink, Keyword]).
 
 % P3 / Constructor - Flows (Capa cosntructora):
-flow(Id, Msg, Options, [Id, Msg, LOps]):-
-    agregarSinDuplicado(Options, LOps).
+makeFlow(Id, Msg, LOps, [Id, Msg, LOps]).
+flow(Id, Msg, Options, F):-
+    agregarSinDuplicado(Options, [],  LOps),
+    makeFlow(Id, Msg, LOps, F).
     
 % P4 / Flow - Modificador (Capa Set):
 flowAddOption(FlowIn, NewOption, FlowOut):-
-    flow(Id, Msg, Options, FlowIn),
-    ifUnicoId(NewOption, Options),
-    addElemLista(NewOption, Options, OptionsOut),    %Falta verificador de que no se repita la Option
-    flow(Id, Msg, OptionsOut, FlowOut).
-    
+    makeFlow(Id, Msg, Options, FlowIn),  
+    addElemLista(NewOption, Options, OptionsOut),   
+    makeFlow(Id, Msg, OptionsOut, FlowOut).
+
 % P5 / Constructor - Chatbots (Capa cosntructora):
-chatbot(CbId, Name, Msg, StartFlowId, Flows, [CbId, Name, Msg, StartFlowId, LFls]):-
-     agregarSinDuplicado(Flows, LFls).
+makeCb(CbId, Name, Msg, StartFlowId, Flows, [CbId, Name, Msg, StartFlowId, Flows]).
+chatbot(CbId, Name, Msg, StartFlowId, Flows, Cb):-
+     agregarSinDuplicado(Flows, [], LFlows),
+     makeCb(CbId, Name, Msg, StartFlowId, LFlows, Cb).
 
 % P6 / Chatbot - Modificador (Capa Set):
 chatbotAddFlow(ChatbotIn, NewFlow, ChatbotOut):-
-    chatbot(CbId, Name, Msg, StartFlowId, Flows, ChatbotIn),
-    ifUnicoId(NewFlow, Flows),
-    addElemLista(Newflow, Flows, FlowsOut),    %Falta verificador de que no se repita la Option
-    chatbot(CbId, Name, Msg, StartFlowId, FlowsOut, ChatbotOut).
-
-% P7: Constructor - System (Capa cosntructora): 
+    makeCb(CbId, Name, Msg, StartFlowId, Flows, ChatbotIn),
+    addElemLista(NewFlow, Flows, FlowsOut),    %Falta verificador de que no se repita la Option
+    makeCb(CbId, Name, Msg, StartFlowId, FlowsOut, ChatbotOut).
+                        
+% P7: Constructor - System (Capa Cosntructora): 
 %system incluye: Name, InCbCode, Users, Current_Users, CHist,  LCbs
-system(Name, InCbCode, Users, Current_User, CHist,Chatbots, [Name, InCbCode, Users, Current_User, CHist, LCbs]):-
-    agregarSinDuplicado(Chatbots, LCbs).
+makeSystem(Name, InCbCode, Users, Current_User, CHist,Chatbots, [Name, InCbCode, Users, Current_User, CHist, Chatbots]).
+system(Name, InCbCode, Chatbots, Syst):-
+    agregarSinDuplicado(Chatbots, [], LCbs),
+    makeSystem(Name, InCbCode, [], "", [], LCbs, Syst).
 
 % P8 / System - Modificador (Capa Set):
-systemAddFCb(SysIn, NewCb, SysOut):-
-    system(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
-    ifUnicoId(NewCb, Chatbots),
-    addElemLista(NewCb, Chatbots, ChatbotsOut),    %Falta verificador de que no se repita la Option
-    system(Name, InCbCode, Users, Current_User, CHist, ChatbotsOut, SysOut).
+systemAddChatbot(SysIn, NewCb, SysOut):-
+    makeSystem(Name, InCbCode, Users, Current_User, CHist,Chatbots, SysIn),
+    addElemLista(NewCb, Chatbots, ChatbotsOut),    
+    makeSystem(Name, InCbCode, Users, Current_User, CHist, ChatbotsOut, SysOut).
 
 % P9 / Add users:
 systemAddUser(SysIn, User, SysOut):-
-    system(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
+    makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
     addUnicoElemLista(User, Users, UsersOut),
-    system(Name, InCbCode, UsersOut, Current_User, CHist, Chatbots, SysOut).
+    makeSystem(Name, InCbCode, UsersOut, Current_User, CHist, Chatbots, SysOut).
 
 % P10 /login:
    systemLogin(SysIn, User, SysOut):-
-     system(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
+     makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
      member(User, Users),
      esigual(Current_User,""),
-     Current_UserOut is User,
-     system(Name, InCbCode, Users,  Current_UserOut, CHist, Chatbots, SysOut).
+     makeSystem(Name, InCbCode, Users, User, CHist, Chatbots, SysOut).
 
 % P11 /logout:
-   systemLogin(SysIn, User, SysOut):-
-     system(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
+   systemLogout(SysIn, SysOut):-
+     makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
      \+ esigual(Current_User,""),
-     Current_UserOut is "",
-     system(Name, InCbCode, Users,  Current_UserOut, CHist, Chatbots, SysOut).
+     makeSystem(Name, InCbCode, Users,  "", CHist, Chatbots, SysOut).
 
-% P12 /Interaccion con un chatbot:
+% P12
+% ----------------------------------------------------------------------------------------------------------------
 % Cuenta las interacciones de un usuario en un sistema.
 contarInteraciones([], _, 0).
 contarInteraciones([[C1|_]|Resto], User, Num):-
     contarInteraciones(Resto, User, N1),
-    C1 = User,
+    esigual(C1,User),
     Num is N1+1.
 contarInteraciones([[C1|_]|Resto], User, Num):-
     contarInteraciones(Resto, User, N1),
-    \+ C1 = User,
+    \+ esigual(C1,User),
     Num is N1. 
-     
-% Se filtra la ultima interaccion de un usuario.
-filtarListaPorUser([], _, []).
-filtarListaPorUser([[C1|H1]|Resto], User, [[C1|H1]|L1]):-
-    filtarListaPorUser(Resto, User, L1),
-    C1 = User. 
-filtarListaPorUser([[C1|_]|Resto], User, L1):-
-    filtarListaPorUser(Resto, User, L1),
-    \+ C1 = User.
-
-% Determinar el Chatbot y flujo en ultima interaccion (La salida sería una lista con cb y fl).
-numCbnumFlAsociadoaUltimaInteraccion(LIn, LOut):-
+%-----------------------------------------------------------------------------------------------------------------
+% De la lista de interaciones (CHist), se filtran las correspondientes a User.
+filtarPorUser([], _, []).
+filtarPorUser([[C1|H1]|Resto], User, [[C1|H1]|L1]):-
+    filtarPorUser(Resto, User, L1),
+    esigual(C1,User). 
+filtarPorUser([[C1|_]|Resto], User, L1):-
+    filtarPorUser(Resto, User, L1),
+    \+ esigual(C1,User).
+%-----------------------------------------------------------------------------------------------------------------
+% Determinar el Chatbot y Flujo en ultima interaccion asociados a la ultima opcion.
+numCbnumFlUltimaInteraccion(LIn, LOut):-
     reverse(LIn, RevLIn), 
     car(RevLIn, L), 
     reverse(L, RevL), 
@@ -131,15 +136,16 @@ numCbnumFlAsociadoaUltimaInteraccion(LIn, LOut):-
     car(CDRevL,Cb1), 
     LOut = [Cb1, Fl1].
 
-% Se filtra por cb o fl de interes.
+% De la lista de registros (Chatbot o flujos) filtra en una lista aquellos que cumplen con el Id
 encontrarRegistroCbOrFl([], _, []). 
 encontrarRegistroCbOrFl([C|Resto], Id, [C|LCb]):-
     encontrarRegistroCbOrFl(Resto, Id, LCb),
-    member(id, C).
+    member(Id, C).
 encontrarRegistroCbOrFl([C|Resto], Id, LCb):-
     encontrarRegistroCbOrFl(Resto, Id, LCb),
-    \+member(id, C).   
+    \+member(Id, C).   
 
+% De la lista de opciones filtra en una lista aquellos que cumplen con la Opcion
 encontrarOpcion([], Opcion, []).
 encontrarOpcion([C|Resto], Opcion, [C|LOp]):-
     encontrarOpcion(Resto, Opcion, LOp),
@@ -147,41 +153,43 @@ encontrarOpcion([C|Resto], Opcion, [C|LOp]):-
     member(Opcion, C); 
     member(Opcion, LOp1).
 
-% Construye una interaccion.
+% Constructor del registro de una interaccion.
 makeInteration(User, L, [User, Fecha, L]):-
     get_time(Fecha).
 
-systemTalkRec(SysIn, Op, SysOut):-
-    system(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
-    contarInteraciones(CHist, Current_User, Num), 
-    Num = 0, 
+systemTalkRec(SysIn, _, SysOut):-
+    makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
+      contarInteraciones(CHist, Current_User, Num), 
+      esigual(Num, 0), 
     makeInteration(Current_User, [0,1,0,0,1], I),
-    addElemLista(I, CHist, CHistOut),
-    system(Name, InCbCode, Users, Current_User, CHistOut, Chatbots, SysOut).
+      addElemLista(I, CHist, CHistOut),
+    makeSystem(Name, InCbCode, Users, Current_User, CHistOut, Chatbots, SysOut).
     
 systemTalkRec(SysIn, Op, SysOut):-
-    system(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
-    contarInteraciones(CHist, Current_User, Num), 
-    \+ Num = 0,                                                       % El Current_User tiene más de una interaccion.
-    filtarListaPorUser(CHist, Current_User, LstInteaciones_User),     % Se identifica la ultima interaccion
+    makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
+      contarInteraciones(CHist, Current_User, Num), 
+      \+ esigual(Num, 0),                                             % El Current_User tiene más de una interaccion.
+    filtarPorUser(CHist, Current_User, LstInteaciones_User),     % Se identifica la ultima interaccion
     car(LstInteracciones_User, Ultima_interaccion),                   % Se obtiene la ultima interaccion        
-    numCbnumFlAsociadoaUltimaInteraccion(Ultima_interaccion, L1),     % De la ultima interacciones se obtiene el cb y fl generados
-    car(L1, C),
-    cadr(L1,F),
-    encontrarRegistroCbOrFl(Chatbots, C, LCbOut), 
-    car(LCbOut, LCbOut1),
-    reverse(LCbOut1, LCbOut2),
-    car(LCbOut2, LFl),
-    encontrarRegistroCbOrFl(LF1, F, LFlOut),
-    car(LFlOut, LFlOut1),
-    reverse(LFlOut1, LFlOut2),
-    car(LFlOut2, LOp),  
-    encontrarOpcion(LOp, Op, LOpOut)
-    car(LOpOut, LOpOut1),
-    car(LOpOut1, C1),
-    cadr(LOpOut1,F1),
+    numCbnumFlUltimaInteraccion(Ultima_interaccion, L1),         % De la ultima interacciones se obtiene el cb y fl generados
+      car(L1, IdCb),
+      cadr(L1, IdFl),
+    encontrarRegistroCbOrFl(Chatbots, IdCb, CbOut), 
+      car(CbOut, CbOut1),                                        %Chatbot buscado
+      reverse(CbOut1, CbOut2),
+      car(CbOut2, LFl),                                          %Del Chaybot de interes se extrae la lista de flujos
+    encontrarRegistroCbOrFl(LF1, IdFl, FlOut),
+      car(FlOut, FlOut1),
+      reverse(FlOut1, FlOut2),
+      car(FlOut2, LOp),  
+    encontrarOpcion(LOp, Op, OpOut),
+      car(OpOut, OpOut1),
+      caddr(OpOut1, C1),
+      cadddr(LOpOut1,F1),
     makeInteration(Current_User, [C,F,Op,C1,F1], I),
-    addElemLista(I, CHist, CHistOut),
-    system(Name, InCbCode, Users, Current_User, CHistOut, Chatbots, SysOut).
+      addElemLista(I, CHist, CHistOut),
+    makeSystem(Name, InCbCode, Users, Current_User, CHistOut, Chatbots, SysOut).
 
-    
+
+
+
