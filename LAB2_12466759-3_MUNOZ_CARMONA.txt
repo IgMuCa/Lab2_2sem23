@@ -14,8 +14,8 @@ caddr(L, F):-
     car(L2,F).
 cadddr(L, G):-
     cdr(L, L1),
-    cdr(L1,L2),
-    cdr(L3,L3),
+    cdr(L1, L2),
+    cdr(L2, L3),
     car(L3,G). 
 
 % Reversar una lista.
@@ -57,7 +57,7 @@ flow(Id, Msg, Options, F):-
 % P4 / Flow - Modificador (Capa Set):
 flowAddOption(FlowIn, NewOption, FlowOut):-
     makeFlow(Id, Msg, Options, FlowIn),  
-    addElemLista(NewOption, Options, OptionsOut),   
+    addUnicoElemLista(NewOption, Options, OptionsOut),   
     makeFlow(Id, Msg, OptionsOut, FlowOut).
 
 % P5 / Constructor - Chatbots (Capa cosntructora):
@@ -69,7 +69,7 @@ chatbot(CbId, Name, Msg, StartFlowId, Flows, Cb):-
 % P6 / Chatbot - Modificador (Capa Set):
 chatbotAddFlow(ChatbotIn, NewFlow, ChatbotOut):-
     makeCb(CbId, Name, Msg, StartFlowId, Flows, ChatbotIn),
-    addElemLista(NewFlow, Flows, FlowsOut),    %Falta verificador de que no se repita la Option
+    addUnicoElemLista(NewFlow, Flows, FlowsOut),    %Falta verificador de que no se repita la Option
     makeCb(CbId, Name, Msg, StartFlowId, FlowsOut, ChatbotOut).
                         
 % P7: Constructor - System (Capa Cosntructora): 
@@ -82,7 +82,7 @@ system(Name, InCbCode, Chatbots, Syst):-
 % P8 / System - Modificador (Capa Set):
 systemAddChatbot(SysIn, NewCb, SysOut):-
     makeSystem(Name, InCbCode, Users, Current_User, CHist,Chatbots, SysIn),
-    addElemLista(NewCb, Chatbots, ChatbotsOut),    
+    addUnicoElemLista(NewCb, Chatbots, ChatbotsOut),    
     makeSystem(Name, InCbCode, Users, Current_User, CHist, ChatbotsOut, SysOut).
 
 % P9 / Add users:
@@ -97,6 +97,16 @@ systemAddUser(SysIn, User, SysOut):-
      member(User, Users),
      esigual(Current_User,""),
      makeSystem(Name, InCbCode, Users, User, CHist, Chatbots, SysOut).
+
+   systemLogin(SysIn, User, SysOut):-
+     makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
+     \+ member(User, Users),
+     makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysOut).
+
+   systemLogin(SysIn, _, SysOut):-
+     makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
+     \+  esigual(Current_User,""),
+     makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysOut).
 
 % P11 /logout:
    systemLogout(SysIn, SysOut):-
@@ -132,26 +142,37 @@ numCbnumFlUltimaInteraccion(LIn, LOut):-
     car(RevLIn, L), 
     reverse(L, RevL), 
     car(RevL, Fl1),
-    cdr(RevL, CDRevL),
-    car(CDRevL,Cb1), 
+    cadr(RevL, Cb1),
     LOut = [Cb1, Fl1].
 
 % De la lista de registros (Chatbot o flujos) filtra en una lista aquellos que cumplen con el Id
 encontrarRegistroCbOrFl([], _, []). 
 encontrarRegistroCbOrFl([C|Resto], Id, [C|LCb]):-
     encontrarRegistroCbOrFl(Resto, Id, LCb),
-    member(Id, C).
+    car(C,Cprimero),
+    esigual(Id,Cprimero).
 encontrarRegistroCbOrFl([C|Resto], Id, LCb):-
     encontrarRegistroCbOrFl(Resto, Id, LCb),
-    \+member(Id, C).   
+    car(C,Cprimero),
+    \+ esigual(Id,Cprimero).  
 
 % De la lista de opciones filtra en una lista aquellos que cumplen con la Opcion
-encontrarOpcion([], Opcion, []).
-encontrarOpcion([C|Resto], Opcion, [C|LOp]):-
-    encontrarOpcion(Resto, Opcion, LOp),
-    reverse(C, LOp1)
-    member(Opcion, C); 
-    member(Opcion, LOp1).
+encontrarOpcion([], _, []).
+encontrarOpcion([[C1|H1]|Resto], Opcion, [[C1|H1]|L1]):-
+    encontrarOpcion(Resto, Opcion, L1),
+    esigual(C1,Opcion).
+encontrarOpcion([[C1|H1]|Resto], Opcion, [[C1|H1]|L1]):-
+    encontrarOpcion(Resto, Opcion, L1),
+    reverse([C1|H1], CRev),
+    car(CRev, Keyword),
+    member(Opcion, Keyword).
+encontrarOpcion([[C1|H1]|Resto], Opcion, L1):-
+   encontrarOpcion(Resto, Opcion, L1),
+    reverse([C1|H1], CRev),
+    car(CRev, Keyword),
+    \+ esigual(C1,Opcion),
+    \+ member(Opcion, Keyword).
+
 
 % Constructor del registro de una interaccion.
 makeInteration(User, L, [User, Fecha, L]):-
@@ -169,7 +190,7 @@ systemTalkRec(SysIn, Op, SysOut):-
     makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
       contarInteraciones(CHist, Current_User, Num), 
       \+ esigual(Num, 0),                                             % El Current_User tiene más de una interaccion.
-    filtarPorUser(CHist, Current_User, LstInteaciones_User),     % Se identifica la ultima interaccion
+    filtarPorUser(CHist, Current_User,LstInteracciones_User),     % Se identifica la ultima interaccion
     car(LstInteracciones_User, Ultima_interaccion),                   % Se obtiene la ultima interaccion        
     numCbnumFlUltimaInteraccion(Ultima_interaccion, L1),         % De la ultima interacciones se obtiene el cb y fl generados
       car(L1, IdCb),
@@ -178,18 +199,16 @@ systemTalkRec(SysIn, Op, SysOut):-
       car(CbOut, CbOut1),                                        %Chatbot buscado
       reverse(CbOut1, CbOut2),
       car(CbOut2, LFl),                                          %Del Chaybot de interes se extrae la lista de flujos
-    encontrarRegistroCbOrFl(LF1, IdFl, FlOut),
+    encontrarRegistroCbOrFl(LFl, IdFl, FlOut),
       car(FlOut, FlOut1),
       reverse(FlOut1, FlOut2),
       car(FlOut2, LOp),  
     encontrarOpcion(LOp, Op, OpOut),
       car(OpOut, OpOut1),
       caddr(OpOut1, C1),
-      cadddr(LOpOut1,F1),
-    makeInteration(Current_User, [C,F,Op,C1,F1], I),
+      cadddr(OpOut1,F1),
+    makeInteration(Current_User, [IdCb,IdFl,Op,C1,F1], I),
       addElemLista(I, CHist, CHistOut),
     makeSystem(Name, InCbCode, Users, Current_User, CHistOut, Chatbots, SysOut).
-
-
 
 
