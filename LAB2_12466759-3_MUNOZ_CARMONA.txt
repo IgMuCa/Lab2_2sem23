@@ -144,7 +144,7 @@ numCbnumFlUltimaInteraccion(LIn, LOut):-
     car(RevL, Fl1),
     cadr(RevL, Cb1),
     LOut = [Cb1, Fl1].
-
+%------------------------------------------------------------------------------------------------------------------
 % De la lista de registros (Chatbot o flujos) filtra en una lista aquellos que cumplen con el Id
 encontrarRegistroCbOrFl([], _, []). 
 encontrarRegistroCbOrFl([C|Resto], Id, [C|LCb]):-
@@ -155,7 +155,7 @@ encontrarRegistroCbOrFl([C|Resto], Id, LCb):-
     encontrarRegistroCbOrFl(Resto, Id, LCb),
     car(C,Cprimero),
     \+ esigual(Id,Cprimero).  
-
+%------------------------------------------------------------------------------------------------------------------
 % De la lista de opciones filtra en una lista aquellos que cumplen con la Opcion
 encontrarOpcion([], _, []).
 encontrarOpcion([[C1|H1]|Resto], Opcion, [[C1|H1]|L1]):-
@@ -172,8 +172,7 @@ encontrarOpcion([[C1|H1]|Resto], Opcion, L1):-
     car(CRev, Keyword),
     \+ esigual(C1,Opcion),
     \+ member(Opcion, Keyword).
-
-
+%------------------------------------------------------------------------------------------------------------------
 % Constructor del registro de una interaccion.
 makeInteration(User, L, [User, Fecha, L]):-
     get_time(Fecha).
@@ -210,5 +209,44 @@ systemTalkRec(SysIn, Op, SysOut):-
     makeInteration(Current_User, [IdCb,IdFl,Op,C1,F1], I),
       addElemLista(I, CHist, CHistOut),
     makeSystem(Name, InCbCode, Users, Current_User, CHistOut, Chatbots, SysOut).
+
+% P13
+%-------------------------------------------------------------------------------------------------------------------------
+% Sacar de una lista de listas, una lista con los segundos elementos de cada lista
+listaSegundosElems([], []).
+listaSegundosElems([C|Resto], LstOut):-
+    listaSegundosElems(Resto, L),
+    cadr(C,C2),
+    LstOut = [C2|L].
+%------------------------------------------------------------------------------------------------------------------------
+% Toma una interacción de interes en CHist, y la trsforma en una interaccion imprimible
+interaccion(Chatbots, LstIn, LstOut):-                          % List es una interacción
+      car(LstIn, User),
+      cadr(LstIn, Fecha),                                       % Se extrae la fecha de la interacción
+      reverse(LstIn, LstInRev),                                 % Se invierte la interaccion
+      car(LstInRev, LstCbFlOp),                                 % Se accede a la lista [IdCb,IdFl,Op,C1,F1]
+    numCbnumFlUltimaInteraccion(LstCbFlOp, LstCbFlOp_Out),
+      car(LstCbFlOp_Out, C1),
+      cadr(LstCbFlOp_Out, Fl1),
+      caddr(LstCbFlOp_Out, Op),
+    encontrarRegistroCbOrFl(Chatbots, C1, CbOut),               % Se obtiene el chatbot de interes 
+      car(CbOut, CbOut1),                                    
+      cadr(CbOut1, Nom_Cb),
+      reverse(CbOut1, CbOut2),
+      car(CbOut2, Lst_Flujos), 
+    encontrarRegistroCbOrFl(Lst_Flujos, Fl1, FlOut),            % Se obtiene el Flujo de interes
+      car(FlOut, FlOut1),                                     
+      cadr(FlOut1, Nom_Fl),  
+      reverse(FlOut1, FlOut2),
+      car(FlOut2, Lst_Ops),                                     % Se accede a la lista de opciones de interes
+    listaSegundosElems(Lst_Ops, Lst_Ops_Out),
+    LstOut = [Fecha, User, Op, Fecha, Nom_Cb, Nom_Fl, Lst_Ops_Out]
+                                  
+generadorInteracciones(SysIn, User, Lst):-
+   makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
+   filtarPorUser(CHist, User, LstInt_UserIn),
+   reverse(LstInt_UserIn, LstInt_UserOut),                      % Se ordena temporalmente la lista de interaccione
+   
+systemSynthesis(SysIn, User, Str):-
 
 
