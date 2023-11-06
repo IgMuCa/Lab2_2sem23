@@ -18,6 +18,12 @@ cadddr(L, G):-
     cdr(L2, L3),
     car(L3,G). 
 
+% Cuenta los elementos de una lista
+contar_elem([], 0).
+contar_elem([_|Resto], N):-
+    contar_elem(Resto, NR),
+    N is NR + 1.
+
 % Reversar una lista.
 reverse([], []).
 reverse([C1|H1], L):-
@@ -218,7 +224,7 @@ listaSegundosElems([C|Resto], LstOut):-
     listaSegundosElems(Resto, L),
     cadr(C,C2),
     LstOut = [C2|L].
-%------------------------------------------------------------------------------------------------------------------------
+
 % Imprime los elementos de una lista, en distintas lineas.
 imprimir_lista([]).
 imprimir_lista([X|Resto]) :- 
@@ -279,7 +285,7 @@ interacciones(SysIn, User, LstInt_UserOut):-
    filtarPorUser(CHist, User, LstInt_UserIn),
    reverse(LstInt_UserIn, LstInt_UserOut).                    % Se ordena temporalmente la lista de interaccione
 
-% Genera una lista imprimible (de acuerdo con los rewuerimientos del lab) de las interacciones
+% Genera una lista imprimible (de acuerdo con los requerimientos del lab) de las interacciones
 lstInteraccionesForPrint(Chatbots, [C], [LstOut_Head]):-
     interaccionForPrint(Chatbots, C, LstOut_Head).
 
@@ -292,8 +298,74 @@ systemSynthesis(SysIn, User, LStr):-
     interacciones(SysIn, User, LstInt_UserOut),
     lstInteraccionesForPrint(Chatbots, LstInt_UserOut, LStr),
     imprimir_lstInteracciones(LStr).
-    
-    
+   
+
+% P14
+%-------------------------------------------------------------------------------------------------------------------------
+% Generador de numeros aleatorios.
+generar_numero_aleatorio_en_rango(Min, Max, Numero) :-
+    random(Min, Max, Numero).
+
+% Generar un usuario dado un codigo numerico: Crea un usuario en el contexto de lo solicitado en lab
+numero_a_string(Numero, Cadena) :-
+    number_codes(Numero, ListaDeCodigos),
+    string_codes(Cadena, ListaDeCodigos).
+
+concatenar_cadenas(Cadena1, Cadena2, Resultado) :-
+    atom_concat(Cadena1, Cadena2, Resultado).
+
+% Se simula una interaccion.
+interationSimulated(_, LstIn ,UserSimulado, ISm) :-
+      contarInteraciones(LstIn, UserSimulado, Num), 
+      esigual(Num, 0), 
+      X = [0,1,"hola",0,1],
+      makeInteration(UserSimulado, X, ISm).
+     
+interationSimulated(Chatbots, LstIn, UserSimulado, ISm):-
+      contarInteraciones(LstIn, UserSimulado, Num), 
+      \+ esigual(Num, 0),                                             % El Current_User tiene más de una interaccion.
+    filtarPorUser(LstIn, UserSimulado,LstInteracciones_UserA),         % Se identifica la ultima interaccion
+    reverse(LstInteracciones_UserA, LstInteracciones_User),
+    car(LstInteracciones_User, Ultima_interaccion),                   % Se obtiene la ultima interaccion        
+    numCbnumFlUltimaInteraccion(Ultima_interaccion, L1),              % De la ultima interacciones se obtiene el cb y fl generados
+      car(L1, IdCb),
+      cadr(L1, IdFl),
+    encontrarRegistroCbOrFl(Chatbots, IdCb, CbOut), 
+      car(CbOut, CbOut1),                                             % Chatbot buscado
+      reverse(CbOut1, CbOut2),
+      car(CbOut2, LFl),                                               % Del Chaybot de interes se extrae la lista de flujos
+    encontrarRegistroCbOrFl(LFl, IdFl, FlOut),
+      car(FlOut, FlOut1),
+      reverse(FlOut1, FlOut2),
+      car(FlOut2, LOp),  
+      contar_elem(LOp, Num_Op),
+      generar_numero_aleatorio_en_rango(1, Num_Op, Op),              % Op corresponde a la opcion simulada
+    encontrarOpcion(LOp, Op, OpOut),
+      car(OpOut, OpOut1),
+      caddr(OpOut1, C1),
+      cadddr(OpOut1,F1),
+      X = [IdCb,IdFl,Op,C1,F1],
+      makeInteration(UserSimulado, X, ISm).
+
+% Se genera el systemSimulate
+generar_lista(_, _, 0, Lista, Lista).
+
+% Caso recursivo: generar los nuevos elementos usando una función y recursión
+generar_lista(Chatbots, UserSimulado, N, ListaParcial, Lista):-
+    N > 0,
+    interationSimulated(Chatbots, ListaParcial, UserSimulado, Elemento),
+    append(ListaParcial, [Elemento], NuevaListaParcial),
+    N1 is N - 1,
+    generar_lista(Chatbots, UserSimulado, N1, NuevaListaParcial, Lista).
+
+systemSimulate(SIn, Num_Simulaciones, Num_Usuario, SOut):-
+    numero_a_string(Num_Usuario, Cadena),
+    concatenar_cadenas(Cadena, "user", User),
+    makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SIn),
+    generar_lista(Chatbots, User, Num_Simulaciones, [], ListaInteracciones),
+    append(ListaInteracciones, CHist, CHistOut),
+    makeSystem(Name, InCbCode, Users, Current_User, CHistOut, Chatbots, SOut),
+    systemSynthesis(SOut, User, _).
     
 
 
