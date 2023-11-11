@@ -322,8 +322,8 @@ interationSimulated(_, LstIn ,UserSimulado, ISm) :-
       makeInteration(UserSimulado, X, ISm).
      
 interationSimulated(Chatbots, LstIn, UserSimulado, ISm):-
-      contarInteraciones(LstIn, UserSimulado, Num), 
-      \+ esigual(Num, 0),                                             % El Current_User tiene más de una interaccion.
+    contarInteraciones(LstIn, UserSimulado, Num), 
+     \+ esigual(Num, 0),                                             % El Current_User tiene más de una interaccion.
     filtarPorUser(LstIn, UserSimulado,LstInteracciones_UserA),         % Se identifica la ultima interaccion
     reverse(LstInteracciones_UserA, LstInteracciones_User),
     car(LstInteracciones_User, Ultima_interaccion),                   % Se obtiene la ultima interaccion        
@@ -363,7 +363,8 @@ systemSimulate(SIn, Num_Simulaciones, Num_Usuario, SOut):-
     concatenar_cadenas(Cadena, "user", User),
     makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SIn),
     generar_lista(Chatbots, User, Num_Simulaciones, [], ListaInteracciones),
-    append(ListaInteracciones, CHist, CHistOut),
+    reverse(ListaInteracciones,ListaInteraccionesRev),
+    append(ListaInteraccionesRev, CHist, CHistOut),
     makeSystem(Name, InCbCode, Users, Current_User, CHistOut, Chatbots, SOut),
     systemSynthesis(SOut, User, _).
     
