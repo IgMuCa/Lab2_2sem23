@@ -1,45 +1,96 @@
-% OTROS:
-% Boolean para la igualdad de cualquier elemento con otro.
-esigual(X, X).
-
 %Programas para manipilar listas
+% car/2
+% Dom: Lista X Elemento
+% Meta Primaria: car/2
 car([C|_], C).
+
+% cdr/2
+% Dom: Lista X Lista
+% Meta Primaria: car/2
 cdr([_|Resto],Resto).
+
+% cadr/2
+% Dom: Lista X Elemento
+% Meta Primaria: cadr/2
+% Meta Secundaria:
+% cdr/2
+% car/2
 cadr(L, C):-
     cdr(L, L1),
     car(L1, C).
+
+% caddr/2
+% Dom: Lista X Elemento
+% Meta Primaria: caddr/2
+% Meta Secundaria:
+% cdr/2
+% car/2
 caddr(L, F):-
     cdr(L, L1),
     cdr(L1,L2),
     car(L2,F).
+
+% cadddr/2
+% Dom: Lista X Elemento
+% Meta Primaria: cadddr/2
+% Meta Secundaria:
+% cdr/2
+% car/2
 cadddr(L, G):-
     cdr(L, L1),
     cdr(L1, L2),
     cdr(L2, L3),
     car(L3,G). 
 
+% Boolean para la igualdad de cualquier elemento con otro.
+% esigual/2
+% Dom: Elemento X Elemento
+% Meta Primaria: esigual/2
+esigual(X, X).
+
 % Cuenta los elementos de una lista
+% Contar_elem/2
+% Dom: lista X Numero
+% Meta Primaria: Contar_elem/2
+% Meta Secundaria: Contar_elem/2
 contar_elem([], 0).
 contar_elem([_|Resto], N):-
     contar_elem(Resto, NR),
     N is NR + 1.
 
 % Reversar una lista.
+% reverse/2
+% Dom: lista X Lista
+% Meta Primaria: reverse/2
+% Meta Secundaria: }
+% reverse/2
+% append/3
 reverse([], []).
 reverse([C1|H1], L):-
     reverse(H1, L1),
     append(L1, [C1], L).
     
 % Agrgar elementos a lista:
+% addElemLista/3
+% Dom: lista X Lista X Lista
+% Meta Primaria: addElemLista/3
 addElemLista(Elemento, Lista, [Elemento|Lista]).
 
 % Agregar elemento a lista, simepre que ya no esté en la lista:
+% addUnicoElemLista/3
+% Dom: Elemento X Lista X Lista
+% Meta Primaria: addElemLista/3
+% Meta Secundaria: member/2
 addUnicoElemLista(Elem, LIn, LIn):-
     member(Elem, LIn).
 addUnicoElemLista(Elem, LIn, [Elem|LIn]):-
     \+ member(Elem, LIn).
 
 % Agregar elementos de una lista a otra lista, asegurando que no hayan duplicados en la lista final:
+% agregarSinDuplicado/3
+% Dom: Lista X Lista X Lista
+% Meta Primaria: agregarSinDuplicado/3
+% Meta Secundaria: member/2
 agregarSinDuplicado([], ListaInAcc, ListaInAcc).
 agregarSinDuplicado([C|Resto], ListaInAcc, ListaOut):- 
     member(C, ListaInAcc),
@@ -52,52 +103,115 @@ agregarSinDuplicado([C|Resto], ListaInAcc, ListaOut):-
 
 %--------------------------------------------------------------------------------------------------
 % P2 / Constructor Options (Capa cosntructora):
+% option/6
+% Dom: Code(Int) x Msg (String) x CbCode(Integer) x InFlCodeLink(Integer) x Keyword(lista de strings) x lista.
+% Meta Primaria: option/6
 option(Code, Msg, CbCode, InFlCodeLink, Keyword, [Code, Msg, CbCode, InFlCodeLink, Keyword]).
 
 % P3 / Constructor - Flows (Capa cosntructora):
+% makeFlow/4
+% Dom: Id(Int) x Msg (String) x LOp(lista de opciones) x lista.
+% Meta Primaria: makeFlow/4
 makeFlow(Id, Msg, LOps, [Id, Msg, LOps]).
+
+% flow/4
+% Dom: Id(Int) x Msg (String) x Options(lista de opciones) x lista.
+% Meta Primaria: flow/4
+% Meta Secundaria: 
+% agregarSinDuplicado/3
+% makeFlow/4
 flow(Id, Msg, Options, F):-
     agregarSinDuplicado(Options, [],  LOps),
     makeFlow(Id, Msg, LOps, F).
     
 % P4 / Flow - Modificador (Capa Set):
+% flowAddOption/3
+% Dom: FlowIn(Flujo) x Optionx FlowOut(Flujo).
+% Meta Primaria: flowAddOption/3
+% Meta Secundaria: 
+% makeFlow/4
+% addUnicoElemLista/3
 flowAddOption(FlowIn, NewOption, FlowOut):-
     makeFlow(Id, Msg, Options, FlowIn),  
     addUnicoElemLista(NewOption, Options, OptionsOut),   
     makeFlow(Id, Msg, OptionsOut, FlowOut).
 
 % P5 / Constructor - Chatbots (Capa cosntructora):
+% makeCb/6
+% Dom: CbId(Int) x Name (String) x Msg (String) x StartFlowId(Int) x Flows(lista de flujos) x lista.
+% Meta Primaria: makeCb/6
 makeCb(CbId, Name, Msg, StartFlowId, Flows, [CbId, Name, Msg, StartFlowId, Flows]).
+
+% chatbot/6
+% Dom: CbId(Int) x Name (String) x Msg (String) x StartFlowId(Int) x Flows(lista de flujos) x Chatbot de salida.
+% Meta Primaria: chatbot/6
+% Meta Secundaria: 
+% agregarSinDuplicado/3
+% makeCb/6
 chatbot(CbId, Name, Msg, StartFlowId, Flows, Cb):-
      agregarSinDuplicado(Flows, [], LFlows),
      makeCb(CbId, Name, Msg, StartFlowId, LFlows, Cb).
 
 % P6 / Chatbot - Modificador (Capa Set):
+% chatbotAddFlow/3
+% Dom: ChatbotIn (Chatbot de entrada) x NewFlow (Flujo) x ChatbotOut (Chatbot de salida).
+% Meta Primaria: chatbotAddFlow/3
+% Meta Secundaria: 
+% makeCb/6
+% addUnicoElemLista/3
 chatbotAddFlow(ChatbotIn, NewFlow, ChatbotOut):-
     makeCb(CbId, Name, Msg, StartFlowId, Flows, ChatbotIn),
     addUnicoElemLista(NewFlow, Flows, FlowsOut),    %Falta verificador de que no se repita la Option
     makeCb(CbId, Name, Msg, StartFlowId, FlowsOut, ChatbotOut).
                         
 % P7: Constructor - System (Capa Cosntructora): 
-%system incluye: Name, InCbCode, Users, Current_Users, CHist,  LCbs
+% makeSystem/7
+% Dom: Name(String) x InCbCode(Int) x Users(String) x Current_User(String) x CHist(Lista) x Chatbots(Chatbots) x Lista
+% Meta Primaria: makeSystem/7
 makeSystem(Name, InCbCode, Users, Current_User, CHist,Chatbots, [Name, InCbCode, Users, Current_User, CHist, Chatbots]).
+
+% system/4
+% Dom: Name(String) x InCbCode(Int) x Chatbots(Chatbots) x Sistema
+% Meta Primaria: system/4
+% Meta Secundaria: 
+% agregarSinDuplicado/3
+% makeSystem/7
 system(Name, InCbCode, Chatbots, Syst):-
     agregarSinDuplicado(Chatbots, [], LCbs),
     makeSystem(Name, InCbCode, [], "", [], LCbs, Syst).
 
 % P8 / System - Modificador (Capa Set):
+% systemAddChatbot/3
+% Dom: SysIn(Sistema) X NewCb (Chatbot) X SysOut (Sistema)
+% Meta Primaria: systemAddChatbot/3,
+% Meta Secundaria: 
+% makeSystem/7
+% addUnicoElemLista/3
 systemAddChatbot(SysIn, NewCb, SysOut):-
     makeSystem(Name, InCbCode, Users, Current_User, CHist,Chatbots, SysIn),
     addUnicoElemLista(NewCb, Chatbots, ChatbotsOut),    
     makeSystem(Name, InCbCode, Users, Current_User, CHist, ChatbotsOut, SysOut).
 
 % P9 / Add users:
+% systemAddUser/3
+% Dom: SysIn(Sistema) X User (String) X SysOut (Sistema)
+% Meta Primaria: systemAddUser/3
+% Meta Secundaria: 
+% makeSystem/7
+% addUnicoElemLista/3
 systemAddUser(SysIn, User, SysOut):-
     makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
     addUnicoElemLista(User, Users, UsersOut),
     makeSystem(Name, InCbCode, UsersOut, Current_User, CHist, Chatbots, SysOut).
 
 % P10 /login:
+% systemLogin/3
+% Dom: SysIn(Sistema) X User (String) X SysOut (Sistema)
+% Meta Primaria: systemLogin/3
+% Meta Secundaria: 
+% makeSystem/7
+% member/2
+% esigual/2
    systemLogin(SysIn, User, SysOut):-
      makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
      member(User, Users),
@@ -115,6 +229,12 @@ systemAddUser(SysIn, User, SysOut):-
      makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysOut).
 
 % P11 /logout:
+% systemLogout/2
+% Dom: SysIn(Sistema) X  SysOut (Sistema)
+% Meta Primaria: systemLogout/2
+% Meta Secundaria: 
+% makeSystem/7
+% esigual/2
    systemLogout(SysIn, SysOut):-
      makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
      \+ esigual(Current_User,""),
@@ -123,6 +243,11 @@ systemAddUser(SysIn, User, SysOut):-
 % P12
 % ----------------------------------------------------------------------------------------------------------------
 % Cuenta las interacciones de un usuario en un sistema.
+% contarInteraciones/3
+% Dom: Lista X  Lista x Integer
+% Meta Primaria: contarInteraciones/3
+% Meta Secundaria: 
+% esigual/2
 contarInteraciones([], _, 0).
 contarInteraciones([[C1|_]|Resto], User, Num):-
     contarInteraciones(Resto, User, N1),
@@ -134,6 +259,11 @@ contarInteraciones([[C1|_]|Resto], User, Num):-
     Num is N1. 
 %-----------------------------------------------------------------------------------------------------------------
 % De la lista de interaciones (CHist), se filtran las correspondientes a User.
+% filtarPorUser/3
+% Dom: Lista X  User(String) x Lista
+% Meta Primaria: filtarPorUser/3
+% Meta Secundaria: 
+% esigual/2
 filtarPorUser([], _, []).
 filtarPorUser([[C1|H1]|Resto], User, [[C1|H1]|L1]):-
     filtarPorUser(Resto, User, L1),
@@ -143,6 +273,13 @@ filtarPorUser([[C1|_]|Resto], User, L1):-
     \+ esigual(C1,User).
 %-----------------------------------------------------------------------------------------------------------------
 % Determinar el Chatbot y Flujo en ultima interaccion asociados a la ultima opcion.
+% numCbnumFlUltimaInteraccion/2
+% Dom: Lista X Lista
+% Meta Primaria: numCbnumFlUltimaInteraccion/2
+% Meta Secundaria: 
+% reverse/2
+% car/2
+% cadr/2
 numCbnumFlUltimaInteraccion(LIn, LOut):-
     reverse(LIn, RevLIn), 
     car(RevLIn, L), 
@@ -152,6 +289,12 @@ numCbnumFlUltimaInteraccion(LIn, LOut):-
     LOut = [Cb1, Fl1].
 %------------------------------------------------------------------------------------------------------------------
 % De la lista de registros (Chatbot o flujos) filtra en una lista aquellos que cumplen con el Id
+% encontrarRegistroCbOrFl/3
+% Dom: Lista X Id(Int) X Lista
+% Meta Primaria: encontrarRegistroCbOrFl/3
+% Meta Secundaria: 
+% car/2
+% esigual/2
 encontrarRegistroCbOrFl([], _, []). 
 encontrarRegistroCbOrFl([C|Resto], Id, [C|LCb]):-
     encontrarRegistroCbOrFl(Resto, Id, LCb),
@@ -163,6 +306,13 @@ encontrarRegistroCbOrFl([C|Resto], Id, LCb):-
     \+ esigual(Id,Cprimero).  
 %------------------------------------------------------------------------------------------------------------------
 % De la lista de opciones filtra en una lista aquellos que cumplen con la Opcion
+% encontrarOpcion/3
+% Dom: Lista X Opcion X Lista
+% Meta Primaria: encontrarOpcion/3
+% Meta Secundaria: 
+% reverse/2
+% esigual/2
+% member/2
 encontrarOpcion([], _, []).
 encontrarOpcion([[C1|H1]|Resto], Opcion, [[C1|H1]|L1]):-
     encontrarOpcion(Resto, Opcion, L1),
@@ -180,9 +330,30 @@ encontrarOpcion([[C1|H1]|Resto], Opcion, L1):-
     \+ member(Opcion, Keyword).
 %------------------------------------------------------------------------------------------------------------------
 % Constructor del registro de una interaccion.
+% makeInteration/3
+% Dom: User(String) X Lista X Lista
+% Meta Primaria: makeInteration/3
+% Meta Secundaria: 
+% get_time/1
 makeInteration(User, L, [User, Fecha, L]):-
     get_time(Fecha).
 
+% systemTalkRec/3
+% Dom: System(Sistema de entrada) X Opcion (Munero o string) X System(Sistema de salida)
+% Meta Primaria: systemTalkRec/3
+% Meta Secundaria: 
+% makeSystem/7
+% contarInteraciones/3
+% esigual/2
+% addElemLista/3
+% filtarPorUser/3
+% car/2
+% cadr/2
+% caddr/2
+% reverse/2
+% numCbnumFlUltimaInteraccion/2
+% encontrarRegistroCbOrFl/3
+% encontrarOpcion/3
 systemTalkRec(SysIn, _, SysOut):-
     makeSystem(Name, InCbCode, Users, Current_User, CHist, Chatbots, SysIn),
       contarInteraciones(CHist, Current_User, Num), 
@@ -219,6 +390,11 @@ systemTalkRec(SysIn, Op, SysOut):-
 % P13
 %-------------------------------------------------------------------------------------------------------------------------
 % Sacar de una lista de listas, una lista con los segundos elementos de cada lista
+% listaSegundosElems/2
+% Dom: Lista x Lista
+% Meta Primaria: listaSegundosElems/2
+% Meta Secundaria: 
+% cadr/2
 listaSegundosElems([], []).
 listaSegundosElems([C|Resto], LstOut):-
     listaSegundosElems(Resto, L),
@@ -226,6 +402,11 @@ listaSegundosElems([C|Resto], LstOut):-
     LstOut = [C2|L].
 
 % Imprime los elementos de una lista, en distintas lineas.
+% imprimir_lista/1
+% Dom: Lista
+% Meta Primaria: imprimir_lista/1
+% Meta Secundaria: 
+% write/1
 imprimir_lista([]).
 imprimir_lista([X|Resto]) :- 
     write(X), 
@@ -233,6 +414,16 @@ imprimir_lista([X|Resto]) :-
     imprimir_lista(Resto).
 
 % Imprime una interacción de acuerdo a los especificado en el LAB.
+% imprimirInteracion/1
+% Dom: Lista
+% Meta Primaria: imprimirInteracion/1
+% Meta Secundaria: 
+% car/2
+% cadr/2
+% caddr/2
+% reverse/2
+% write/1
+% imprimir_lista/1
 imprimirInteracion(Interaccion):-
     car(Interaccion, Fecha),
     cadr(Interaccion, User),
@@ -250,6 +441,13 @@ imprimirInteracion(Interaccion):-
     nl,
     imprimir_lista(Opciones_Ord).
 
+
+% imprimir_lstInteracciones/1
+% Dom: Lista
+% Meta Primaria: imprimir_lstInteracciones/1
+% Meta Secundaria: 
+% imprimirInteracion/1
+% imprimir_lstInteracciones
 imprimir_lstInteracciones([]).
 imprimir_lstInteracciones([X|Resto]):-
     imprimirInteracion(X),
@@ -257,6 +455,17 @@ imprimir_lstInteracciones([X|Resto]):-
     imprimir_lstInteracciones(Resto).
     
 % Toma una interacción de interes en CHist, y la trasforma en una interaccion imprimible
+% interaccionForPrint/3
+% Dom: Lista de Chatbots X Lista X Lista
+% Meta Primaria: interaccionForPrint/3
+% Meta Secundaria: 
+% car/2
+% cadr/2
+% caddr/2
+% reverse/2
+% numCbnumFlUltimaInteraccion/2
+% encontrarRegistroCbOrFl/3
+%  listaSegundosElems/2
 interaccionForPrint(Chatbots, LstIn, LstOut):-                          % List es una interacción
       car(LstIn, User),
       cadr(LstIn, Fecha),                                       % Se extrae la fecha de la interacción
@@ -280,19 +489,39 @@ interaccionForPrint(Chatbots, LstIn, LstOut):-                          % List e
     LstOut = [Fecha, User, Op, Fecha, Nom_Cb, Nom_Fl, Lst_Ops_Out].
  
 % Genera una lista de las interacciones asociadas al User
+% interacciones/3
+% Dom: Sistema X User X Lista
+% Meta Primaria: interacciones/3
+% Meta Secundaria: 
+% makeSystem/7
+% filtarPorUser/3
+% reverse/2
 interacciones(SysIn, User, LstInt_UserOut):-
    makeSystem(_, _, _, _, CHist, _, SysIn),
    filtarPorUser(CHist, User, LstInt_UserIn),
    reverse(LstInt_UserIn, LstInt_UserOut).                    % Se ordena temporalmente la lista de interaccione
 
 % Genera una lista imprimible (de acuerdo con los requerimientos del lab) de las interacciones
+% lstInteraccionesForPrint/3
+% Dom: Chatbots X Lista X Lista
+% Meta Primaria: lstInteraccionesForPrint/3
+% Meta Secundaria: 
+% minteraccionForPrint/3
 lstInteraccionesForPrint(Chatbots, [C], [LstOut_Head]):-
     interaccionForPrint(Chatbots, C, LstOut_Head).
 
 lstInteraccionesForPrint(Chatbots, [C|Resto], [LstOut_Head|LstOut_Resto]):-
   lstInteraccionesForPrint(Chatbots, Resto, LstOut_Resto),
     interaccionForPrint(Chatbots, C, LstOut_Head).
-    
+
+% systemSynthesis/3
+% Dom: Sistema X User(String) X Lista
+% Meta Primaria: systemSynthesis/3
+% Meta Secundaria: 
+% makeSystem/7
+% interacciones/3
+% lstInteraccionesForPrint/3
+% imprimir_lstInteracciones/1
 systemSynthesis(SysIn, User, LStr):-
     makeSystem(_, _, _, _, _, Chatbots, SysIn),
     interacciones(SysIn, User, LstInt_UserOut),
@@ -303,18 +532,51 @@ systemSynthesis(SysIn, User, LStr):-
 % P14
 %-------------------------------------------------------------------------------------------------------------------------
 % Generador de numeros aleatorios.
+% generar_numero_aleatorio_en_rango/3
+% Dom: Núnero X Núnero X Núnero
+% Meta Primaria: generar_numero_aleatorio_en_rango/3
+% Meta Secundaria: 
+% random/3
 generar_numero_aleatorio_en_rango(Min, Max, Numero) :-
     random(Min, Max, Numero).
 
 % Generar un usuario dado un codigo numerico: Crea un usuario en el contexto de lo solicitado en lab
+% numero_a_string/2
+% Dom: Núnero X String
+% Meta Primaria: numero_a_string/2
+% Meta Secundaria: 
+% number_codes/2
+% string_codes/2
 numero_a_string(Numero, Cadena) :-
     number_codes(Numero, ListaDeCodigos),
     string_codes(Cadena, ListaDeCodigos).
 
+% concatenar_cadenas/3
+% Dom: String X String X String 
+% Meta Primaria: numero_a_string/2
+% Meta Secundaria: 
+% atom_concat/3
 concatenar_cadenas(Cadena1, Cadena2, Resultado) :-
     atom_concat(Cadena1, Cadena2, Resultado).
 
 % Se simula una interaccion.
+% interationSimulated/4
+% Dom: Chatbots  X LstIn X UserSimulado(String) X ISm(Interacción)
+% Meta Primaria: interationSimulated/4
+% Meta Secundaria: 
+% contarInteraciones/3
+% esigual/2
+% makeInteration/3
+% filtarPorUser/4
+% numCbnumFlUltimaInteraccion/3
+% car/2
+% cadr/2
+% encontrarRegistroCbOrFl/3
+% reverse/2
+% contar_elem/2
+% generar_numero_aleatorio_en_rango/3
+% encontrarOpcion/3
+%  makeInteration/3
 interationSimulated(_, LstIn ,UserSimulado, ISm) :-
       contarInteraciones(LstIn, UserSimulado, Num), 
       esigual(Num, 0), 
@@ -348,6 +610,14 @@ interationSimulated(Chatbots, LstIn, UserSimulado, ISm):-
       makeInteration(UserSimulado, X, ISm).
 
 % Se genera el systemSimulate
+% Se simula una interaccion.
+% generar_lista/5
+% Dom: Chatbots X UserSimulado(String) X N(Integer) X ListaParcial X Lista
+% Meta Primaria: generar_lista/5
+% Meta Secundaria: 
+% interationSimulated/4
+% append/3
+% generar_lista/5
 generar_lista(_, _, 0, Lista, Lista).
 
 % Caso recursivo: generar los nuevos elementos usando una función y recursión
@@ -358,6 +628,19 @@ generar_lista(Chatbots, UserSimulado, N, ListaParcial, Lista):-
     N1 is N - 1,
     generar_lista(Chatbots, UserSimulado, N1, NuevaListaParcial, Lista).
 
+% Se genera el systemSimulate
+% Se simula una interaccion.
+% systemSimulate/4
+% Dom: SIn(Sistema) X Num_Simulaciones(Integer) X Num_Usuario(Integer) X SOut(Sistema)
+% Meta Primaria: systemSimulate/4
+% Meta Secundaria: 
+% numero_a_string/2
+% makeSystem/7
+% generar_lista/5
+% reverse/2
+% append/3
+% makeSystem/7
+% systemSynthesis/3
 systemSimulate(SIn, Num_Simulaciones, Num_Usuario, SOut):-
     numero_a_string(Num_Usuario, Cadena),
     concatenar_cadenas(Cadena, "user", User),
